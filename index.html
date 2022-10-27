@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Hurricane Simulator</title>
+    <style>
+      @font-face {
+        font-family: "Clean";
+        src: url(font.ttf);
+      }
+      body {
+        margin: 0;
+      }
+      html, body {
+        font-family: "Clean", Arial !important;
+        font-size: 20px;
+        overflow: hidden !important;
+        user-select: none !important;
+        transition: top .2s;
+        background: #54eeff;
+      }
+      * {
+        font-family: "Clean", Arial !important;
+      }
+      .ui {
+        z-index: 99999;
+      }
+      canvas {
+        position: relative;
+        box-shadow: 0 0 200px rgba(255, 255, 255, .9) inset;
+      }
+      .scoreboard {
+        position: absolute;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        width: 100px;
+        text-align: center;
+        height: 100px;
+        padding: 5px;
+        border-radius: 5px;
+        z-index: 9999;
+        left: 90%;
+        top: 80vh;
+        font-size: 12px;
+        letter-spacing: 2px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        background: #fff;
+        background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(121,201,255,.5) 100%);
+        color: #fff;
+        border: 5px solid #fff;
+      }
+      hr {
+        position: relative;
+        outline: none !important;
+        width: 100%;
+        margin-top: 3px;
+        height: 1px;
+        box-shadow: none !important;
+        border: none !important;
+        background: #333;
+      }
+      .ui #status {
+        position: absolute;
+        background: #fff;
+        left: 20px;
+        top: 20px;
+        width: 200px;
+        text-align: center;
+        color: #333;
+        padding: 5px;
+        border: 5px solid #fff;
+        border-radius: 5px;
+        perspective: 1600px;
+        perspective-origin: 50% -240px;
+        transform-style: preserve-3d;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        height: 140px;
+        z-index: 9999;
+      }
+      .ui img:not(.statustext) {
+        position: absolute;
+        left: 0;
+        top: -10px;
+        margin: 0;
+        padding: 0;
+      }
+      .swal-overlay {
+        background: transparent !important;
+        pointer-events: none !important;
+      }
+      .swal-title {
+        font-size: 30px;
+      }
+      .health {
+        position: relative;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+      }
+      .health-wrapper {
+        position: absolute;
+        width: 500px;
+        height: 30px;
+        left: 50%;
+        margin-left: -250px;
+        top: 20px;
+        border-radius: 5px;
+        border: 1px solid #fff;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        z-index: 99999;
+        backdrop-filter: blur(5px);
+      }
+      .backuphealth {
+        position: relative;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(121,201,255,.5) 100%);
+      }
+      .backuphealth-wrapper {
+        position: absolute;
+        width: 300px;
+        height: 15px;
+        left: 50%;
+        margin-left: -150px;
+        top: 70px;
+        border-radius: 5px;
+        border: 3px solid #fff;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        z-index: 99999;
+      }
+      body {
+        top: 0px;
+      }
+      .statustext {
+        position: absolute;
+        top: -10%;
+        left: 50%;
+        width: 50%;
+        margin-left: -25%;
+        display: none;
+      }
+      .ui .radar {
+        position: absolute;
+        left: 50px !important;
+        top: 70% !important;
+      }
+      #visor {
+        pointer-events: none !important;
+      }
+      canvas:first {
+        position: absolute;
+        width: 62.5vw;
+        height: 100vw;
+        left: 50% !important;
+        margin-left: -31.25vw !important;
+      }
+      .crosshair {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        margin: 0;
+        padding: 0;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        left: 50%;
+        top: 50%;
+        margin-left: -2.5px;
+        margin-top: -2.5px;
+        z-index: 9999;
+      }
+      .swal-modal {
+        background: #fff;
+        background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(121,201,255,.5) 100%);
+        width: 100% !important;
+        padding-top: 50px;
+        padding-bottom: 50px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        transition: width 1s ease-in;
+      }
+      .swal-modal * {
+        color: #79c9ff;
+      }
+      .swal-button {
+        width: 100% !important;
+        margin: 10px !important;
+        background: #fff !important;
+        border: 3px solid #79c9ff;
+        border-radius: 0 !important;
+        color: #79c9ff !important;
+        box-shadow: none !important;
+        outline: none !important;
+      }
+      .swal-button-container {
+        width: 100% !important;
+        margin: 20px !important;
+        margin-left: -10px !important;
+      }
+      * {
+        white-space: nowrap;
+      }
+      .loader {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        background: #fff;
+        background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(121,201,255,1) 100%);
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+        margin: 0 !important;
+        left: 0 !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 999999;
+        background-repeat: no-repeat;
+      }
+      .loader-1 {
+        position: absolute;
+        width: 10vmax;
+        height: 10vmax;
+        border-right: 10px solid #fff;
+        border-radius: 100%;
+        animation: spinRight 800ms linear infinite;
+        margin: 0;
+        left: 50%;
+        margin-left: -5vmax;
+        margin-top: 200px;
+      }
+      @keyframes spinLeft {
+      	from {
+          transform: rotate(0deg);
+      	}
+      	to {
+      	  transform: rotate(720deg);
+      	}
+      }
+      @keyframes spinRight {
+      	from {
+      	  transform: rotate(360deg);
+      	}
+      	to {
+      	  transform: rotate(0deg);
+      	}
+      }
+      .progress-bar {
+        position: absolute;
+        margin-top: 90px;
+        width: 30%;
+        height: 30px;
+        padding: 5px;
+        background: #fff;
+        left: 50%;
+        margin-left: -15%;
+      }
+      #progress {
+        margin: 0;
+        width: 1%;
+        height: 100%;
+        background: #79c9ff;
+      }
+      #weapontext {
+        position: absolute;
+        left: 50%;
+        color: #333;
+        text-shadow: 0 2px #ff4444;
+        font-size: 20px;
+        font-weight: 600;
+        font-family: monospace, Arial;
+        z-index: 9999;
+        bottom: 50px;
+        width: 1000px;
+        margin-left: -500px;
+        text-align: center;
+      }
+      a:active {
+        border: 2px solid currentColor;
+        border-radius: 2px;
+      }
+      .pause-menu {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: #333;
+        background: rgba(15,15,15,.5);
+        z-index: 9999;
+      }
+      .pause-tab {
+        position: relative;
+        top: 200px;
+        left: 0;
+        margin: 0;
+        margin-bottom: 30px;
+        background: #444;
+        display: inline-block;
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        padding: 5px;
+        width: 250px;
+        color: #333;
+        text-shadow: 0 2px #25750a;
+        text-align: center;
+        box-shadow: 0 3px 5px #25750a;
+      }
+      img {
+        pointer-events: none !important;
+        user-select: none !important;
+      }
+      .overlay {
+        position: fixed;
+        text-align: center;
+        color: #eee !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: #333333af;
+        backdrop-filter: blur(20px);
+        height: 100%;
+        margin: 0;
+        width: 100%;
+        z-index: 999999999;
+      }
+      #trees_mp4 {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        height: 100%;
+        margin: 0;
+        width: 100%;
+        z-index: 999999998;
+        object-fit: cover;
+      }
+      button {
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+        display: inline-flex;
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+        width: 100px;
+        font-size: 20px;
+        height: 40px;
+        padding: 5px;
+        color: #333;
+        border: none;
+        outline: none;
+        border-radius: 4px;
+      }
+      input {
+        width: 130px;
+        padding: 2px;
+        font-size: 20px;
+        border: none;
+        outline: none;
+        caret-color: #333;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <video id="trees_mp4" src="trees.webm" autoplay loop></video>
+    <div class="overlay">
+      <h1 style="position:relative;margin-top:15%!important">Hurricane Simulator</h1>
+      <div style="text-align:center">
+      <label for="entername">Name: </label> <input type="text" id="entername" placeholder="Enter a name..." maxlength="12" onkeydown="this.value = cut(this.value, 12)">
+      <br>
+      <label for="entercat">Category: </label> <input type="number" id="entercat" placeholder="Set category..." max="6" min="1" onfocus="this.blur()">
+      </div>
+      <br>
+      <button onclick="document.body.requestFullscreen(), document.body.requestPointerLock(), begin(this, document.querySelector('#entername').value, document.querySelector('#entercat').value)">Begin</button>
+    </div>
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/js/libs/fflate.min.js"></script>
+    <script src="https://unpkg.com/@seregpie/three.text-texture"></script>
+    <audio id="walking" src="walking.mp3" loop></audio>
+    <audio id="surge" src="surge.mp3" volume="1"></audio>
+    <audio id="beep" src="beep.mp3" volume="1"></audio>
+    <audio id="glass" src="break.mp3" volume="1"></audio>
+    <audio id="storm" src="storm.mp3" autoplay loop></audio>
+    <audio id="thunder" src="thunder.mp3" autoplay loop></audio>
+    <div class="ui">
+      <div class="health-wrapper">
+        <div class="health"></div>
+      </div>
+      <img id="vignette" src="vignette.png" style="position:fixed;height:102%;width:100%;z-index:9999;pointer-events:none;filter:invert(0%);opacity:.5" />
+      <div class="crosshair"></div>
+      <div id="status">
+        Hurricane <span id="name">Null</span>
+        <hr>
+        Category <span id="category">0</span>
+        <hr>
+        Est. Cat <span id="role">0</span>
+        <hr>
+        Wind <span id="gusts">0</span> MPH
+      </div>
+    </div>
+    <script>
+      function cut(str, length) {
+        return str.split("").reverse().join("").slice(-length).split("").reverse().join("");
+      }
+      function begin(el, rlname, rlcat) {
+        el.disabled = true;
+        let b = 0;
+        let h;
+        function display() {
+          (controls.isLocked = true, el.parentElement.style.display = "none", start(rlname, rlcat));
+        }
+        typeof house == "undefined" ? h = setInterval(() => { typeof house == "undefined" ? (b++, el.innerHTML = `Begin&nbsp;&nbsp;<img src='loading.png' style="transform:rotate(${b}deg)">`) : (display(), clearInterval(h)) }) : display();
+      }
+      health = 100;
+      function collision(e,B){return firstBB=(new THREE.Box3).setFromObject(e),secondBB=(new THREE.Box3).setFromObject(B),firstBB.intersectsBox(secondBB)}
+      trees_mp4.currentTime = 15;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, .2, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      renderer.setPixelRatio(1);
+      follower = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+      water = new THREE.Mesh(new THREE.CircleGeometry(10, 20), new THREE.MeshPhongMaterial({ transparent: true, map: new THREE.TextureLoader().load("water.png"), side: THREE.DoubleSide })), scene.add(water), water.rotation.set(Math.PI/2, 0, 0), water.position.set(0, -.8, 0);
+      flash = new THREE.PointLight(0x062d89, 30, 500, 1.7);
+      flash.position.set(200,300,100);
+      scene.add(flash);
+      sky = new THREE.Mesh();
+      rain = new THREE.Mesh();
+      defaultY = 0;
+      cameraLocked = true;
+      isJumping = false;
+      started = false;
+      function animate() {
+        follower.position.copy(camera.position);
+        follower.updateMatrix();
+        if (!isPassed && (typeof config.category == 0 ? 1 : config.category == 1 ? random(400, 400) : config.category == 2 ? random(350, 350) : config.category == 3 ? random(300, 300) : config.category == 4 ? random(250, 250) : config.category == 5 && random(200, 200)) == 0) {
+          if (started) {
+            glass.play();
+            document.querySelector("#vignette").style.filter = "invert(0%)";
+          }
+        } else {
+          setTimeout(() => document.querySelector("#vignette").style.filter = "invert(0%)", 1500);
+        }
+        document.querySelector(".health").style.width = health + "%";
+        document.querySelector("#name").textContent = name;
+        document.querySelector("#category").textContent = config.category;
+        document.querySelector("#gusts").textContent = config.gusts;
+        if (cameraLocked) camera.position.y = defaultY;
+        if (!isPassed) {
+          if (started) {
+            rain.rotateZ(config.gusts/random(config.gusts,config.gusts,config.gusts));
+            if (Math.random() > 0.93 || flash.power > 100) {
+              if (flash.power < 100) {
+                flash.position.set(Math.random()*400,300+Math.random()*200,100);
+              }
+              flash.power = 50 + Math.random() * 550;
+              flash.intensity > 45 && random(60, 60) == 0 && poweroff();
+              flash.intensity > 44 && random(30, 30) == 0 && config.category >= 2 && (()=>{let e=["p_pl_window_24_150x150_284","p_pl_window_24_150x150_278","p_pl_armchair_03_60x60_70"],t=house.getObjectByName(e[Math.floor(Math.random()*e.length)]),o=setInterval((()=>(t.position.x+=.1,t.rotateX(-.3),collision(t,follower)&&(health+=-20))));setTimeout((()=>clearInterval(o)),1e4)})();
+              flash.intensity > 30 && random(10, 10) == 0 && config.category >= 2 && (water.position.y += .01);
+              water.position.y >= camera.position.y ? (health--, renderer.domElement.style.opacity = ".5", camera.setFocalLength(9)) : ((health >= 80 || (health += .05)), renderer.domElement.style.opacity = "1", camera.setFocalLength(7.7));
+            }
+          }
+        } else {
+          clearInterval(hurricaneFunc);
+          setTimeout(() => {
+            glass.pause();
+            thunder.pause();
+            storm.pause();
+          }, 5000);
+          let r = random(20, 10, 5);
+          ambient.intensity = 3;
+          ambient.color.setRGB(.2, .2, .2);
+          let h = setInterval(() => {
+            config.gusts < r ? clearTimeout(h) : (config.gusts--);
+          }, 500);
+          config.category = 0;
+        }
+        water.rotation.z += .1;
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        random(500, 500) == 0 && poweron();
+      }
+      hurricaneFunc = null;
+      isPassed = false;
+      setTimeout(() => {
+        scene.remove(hurricane);
+        scene.remove(flash);
+        scene.remove(rain);
+        let h=setInterval(()=>{sky.material.color.r>1?(sky.material.color.setRGB(1,1,1),clearInterval(h)):(sky.material.color.r+=.001,sky.material.color.g+=.001,sky.material.color.b+=.001)});
+        isPassed = true;
+        setTimeout(() => {
+          poweron();
+        }, 15000);
+      }, random(100,0,100)*1500);
+      function random(range, chance, set = 0) {
+        return (Math.floor(Math.random() * range) + (set || 0));
+      }
+      config = {
+        category: 1,
+        gusts: 74,
+        hurricane: new THREE.Group,
+        direction: {
+          x: 0,
+          z: 0
+        },
+        status: [74, 96, 111, 130, 157, 200]
+      };
+      function generateName(){let a=["Jacob","Michael","Ethan","Joshua","Daniel","Alexander","Anthony","William","Christopher","Matthew","Jayden","Andrew","Joseph","David","Noah","Aiden","James","Ryan","Logan","John","Nathan","Elijah","Christian","Gabriel","Benjamin","Jonathan","Tyler","Samuel","Nicholas","Gavin","Dylan","Jackson","Brandon","Caleb","Mason","Angel","Isaac","Evan","Jack","Kevin","Jose","Isaiah","Luke","Landon","Justin","Lucas","Zachary","Jordan","Robert","Aaron","Brayden","Thomas","Cameron","Hunter","Austin","Adrian","Connor","Owen","Aidan","Jason","Julian","Wyatt","Charles","Luis","Carter","Juan","Chase","Diego","Jeremiah","Brody","Xavier","Adam","Carlos","Sebastian","Liam","Hayden","Nathaniel","Henry","Jesus","Ian","Tristan","Bryan","Sean","Cole","Alex","Eric","Brian","Jaden","Carson","Blake","Ayden","Cooper","Dominic","Brady","Caden","Josiah","Kyle","Colton","Kaden","Eli","Miguel","Antonio","Parker","Steven","Alejandro","Riley","Richard","Timothy","Devin","Jesse","Victor","Jake","Joel","Colin","Kaleb","Bryce","Levi","Oliver","Oscar","Vincent","Ashton","Cody","Micah","Preston","Marcus","Max","Patrick","Seth","Jeremy","Peyton","Nolan","Ivan","Damian","Maxwell","Alan","Kenneth","Jonah","Jorge","Mark","Giovanni","Eduardo","Grant","Collin","Gage","Omar","Emmanuel","Trevor","Edward","Ricardo","Cristian","Nicolas","Kayden","George","Jaxon","Paul","Braden","Elias","Andres","Derek","Garrett","Tanner","Malachi","Conner","Fernando","Cesar","Javier","Miles","Jaiden","Alexis","Leonardo","Santiago","Francisco","Cayden","Shane","Edwin","Hudson","Travis","Bryson","Erick","Jace","Hector","Josue","Peter","Jaylen","Mario","Manuel","Abraham","Grayson","Damien","Kaiden","Spencer","Stephen","Edgar","Wesley","Shawn","Trenton","Jared","Jeffrey","Landen","Johnathan","Bradley","Braxton","Ryder","Camden","Roman","Asher","Brendan","Maddox","Sergio","Israel","Andy","Lincoln","Erik","Donovan","Raymond","Avery","Rylan","Dalton","Harrison","Andre","Martin","Keegan","Marco","Jude","Sawyer","Dakota","Leo","Calvin","Kai","Drake","Troy","Zion","Clayton","Roberto","Zane","Gregory","Tucker","Rafael","Kingston","Dominick","Ezekiel","Griffin","Devon","Drew","Lukas","Johnny","Ty","Pedro","Tyson","Caiden","Mateo","Braylon","Cash","Aden","Chance","Taylor","Marcos","Maximus","Ruben","Emanuel","Simon","Corbin","Brennan","Dillon","Skyler","Myles","Xander","Jaxson","Dawson","Kameron","Kyler","Axel","Colby","Jonas","Joaquin","Payton","Brock","Frank","Enrique","Quinn","Emilio","Malik","Grady","Angelo","Julio","Derrick","Raul","Fabian","Corey","Gerardo","Dante","Ezra","Armando","Allen","Theodore","Gael","Amir","Zander","Adan","Maximilian","Randy","Easton","Dustin","Luca","Phillip","Julius","Charlie","Ronald","Jakob","Cade","Brett","Trent","Silas","Keith","Emiliano","Trey","Jalen","Darius","Lane","Jerry","Jaime","Scott","Graham","Weston","Braydon","Anderson","Rodrigo","Pablo","Saul","Danny","Donald","Elliot","Brayan","Dallas","Lorenzo","Casey","Mitchell","Alberto","Tristen","Rowan","Jayson","Gustavo","Aaden","Amari","Dean","Braeden","Declan","Chris","Ismael","Dane","Louis","Arturo","Brenden","Felix","Jimmy","Cohen","Tony","Holden","Reid","Abel","Bennett","Zackary","Arthur","Nehemiah","Ricky","Esteban","Cruz","Finn","Mauricio","Dennis","Keaton","Albert","Marvin","Mathew","Larry","Moises","Issac","Philip","Quentin","Curtis","Greyson","Jameson","Everett","Jayce","Darren","Elliott","Uriel","Alfredo","Hugo","Alec","Jamari","Marshall","Walter","Judah","Jay","Lance","Beau","Ali","Landyn","Yahir","Phoenix","Nickolas","Kobe","Bryant","Maurice","Russell","Leland","Colten","Reed","Davis","Joe","Ernesto","Desmond","Kade","Reece","Morgan","Ramon","Rocco","Orlando","Ryker","Brodie","Paxton","Jacoby","Douglas","Kristopher","Gary","Lawrence","Izaiah","Solomon","Nikolas","Mekhi","Justice","Tate","Jaydon","Salvador","Shaun","Alvin","Eddie","Kane","Davion","Zachariah","Dorian","Titus","Kellen","Camron","Isiah","Javon","Nasir","Milo","Johan","Byron","Jasper","Jonathon","Chad","Marc","Kelvin","Chandler","Sam","Cory","Deandre","River","Reese","Roger","Quinton","Talon","Romeo","Franklin","Noel","Alijah","Guillermo","Gunner","Damon","Jadon","Emerson","Micheal","Bruce","Terry","Kolton","Melvin","Beckett","Porter","August","Brycen","Dayton","Jamarion","Leonel","Karson","Zayden","Keagan","Carl","Khalil","Cristopher","Nelson","Braiden","Moses","Isaias","Roy","Triston","Walker","Kale","Jermaine","Leon","Rodney","Kristian","Mohamed","Ronan","Pierce","Trace","Warren","Jeffery","Maverick","Cyrus","Quincy","Nathanael","Skylar","Tommy","Conor","Noe","Ezequiel","Demetrius","Jaylin","Kendrick","Frederick","Terrance","Bobby","Jamison","Jon","Rohan","Jett","Kieran","Tobias","Ari","Colt","Gideon","Felipe","Kenny","Wilson","Orion","Kamari","Gunnar","Jessie","Alonzo","Gianni","Omari","Waylon","Malcolm","Emmett","Abram","Julien","London","Tomas","Allan","Terrell","Matteo","Tristin","Jairo","Reginald","Brent","Ahmad","Yandel","Rene","Willie","Boston","Billy","Marlon","Trevon","Aydan","Jamal","Aldo","Ariel","Cason","Braylen","Javion","Joey","Rogelio","Ahmed","Dominik","Brendon","Toby","Kody","Marquis","Ulises","Armani","Adriel","Alfonso","Branden","Will","Craig","Ibrahim","Osvaldo","Wade","Harley","Steve","Davin","Deshawn","Kason","Damion","Jaylon","Jefferson","Aron","Brooks","Darian","Gerald","Rolando","Terrence","Enzo","Kian","Ryland","Barrett","Jaeden","Ben","Bradyn","Giovani","Blaine","Madden","Jerome","Muhammad","Ronnie","Layne","Kolby","Leonard","Vicente","Cale","Alessandro","Zachery","Gavyn","Aydin","Xzavier","Malakai","Raphael","Cannon","Rudy","Asa","Darrell","Giancarlo","Elisha","Junior","Zackery","Alvaro","Lewis","Valentin","Deacon","Jase","Harry","Kendall","Rashad","Finnegan","Mohammed","Ramiro","Cedric","Brennen","Santino","Stanley","Tyrone","Chace","Francis","Johnathon","Teagan","Zechariah","Alonso","Kaeden","Kamden","Gilberto","Ray","Karter","Luciano","Nico","Kole","Aryan","Draven","Jamie","Misael","Lee","Alexzander","Camren","Giovanny","Amare","Rhett","Rhys","Rodolfo","Nash","Markus","Deven","Mohammad","Moshe","Quintin","Dwayne","Memphis","Atticus","Davian","Eugene","Jax","Antoine","Wayne","Randall","Semaj","Uriah","Clark","Aidyn","Jorden","Maxim","Aditya","Lawson","Messiah","Korbin","Sullivan","Freddy","Demarcus","Neil","Brice","King","Davon","Elvis","Ace","Dexter","Heath","Duncan","Jamar","Sincere","Irvin","Remington","Kadin","Soren","Tyree","Damarion","Talan","Adrien","Gilbert","Keenan","Darnell","Adolfo","Tristian","Derick","Isai","Rylee","Gauge","Harold","Kareem","Deangelo","Agustin","Coleman","Zavier","Lamar","Emery","Jaydin","Devan","Jordyn","Mathias","Prince","Sage","Seamus","Jasiah","Efrain","Darryl","Arjun","Mike","Roland","Conrad","Kamron","Hamza","Santos","Frankie","Dominique","Marley","Vance","Dax","Jamir","Kylan","Todd","Maximo","Jabari","Matthias","Haiden","Luka","Marcelo","Keon","Layton","Tyrell","Kash","Raiden","Cullen","Donte","Jovani","Cordell","Kasen","Rory","Alfred","Darwin","Ernest","Bailey","Gaige","Hassan","Jamarcus","Killian","Augustus","Trevin","Zain","Ellis","Rex","Yusuf","Bruno","Jaidyn","Justus","Ronin","Humberto","Jaquan","Josh","Kasey","Winston","Dashawn","Lucian","Matias","Sidney","Ignacio","Nigel","Van","Elian","Finley","Jaron","Addison","Aedan","Braedon","Jadyn","Konner","Zayne","Franco","Niko","Savion","Cristofer","Deon","Krish","Anton","Brogan","Cael","Coby","Kymani","Marcel","Yair","Dale","Bo","Jordon","Samir","Darien","Zaire","Ross","Vaughn","Devyn","Kenyon","Clay","Dario","Ishaan","Jair","Kael","Adonis","Jovanny","Clinton","Rey","Chaim","German","Harper","Nathen","Rigoberto","Sonny","Glenn","Octavio","Blaze","Keshawn","Ralph","Ean","Nikhil","Rayan","Sterling","Branson","Jadiel","Dillan","Jeramiah","Koen","Konnor","Antwan","Houston","Tyrese","Dereon","Leonidas","Zack","Fisher","Jaydan","Quinten","Nick","Urijah","Darion","Jovan","Salvatore","Beckham","Jarrett","Antony","Eden","Makai","Zaiden","Broderick","Camryn","Malaki","Nikolai","Howard","Immanuel","Demarion","Valentino","Jovanni","Ayaan","Ethen","Leandro","Royce","Yael","Yosef","Jean","Marquise","Alden","Leroy","Gaven","Jovany","Tyshawn","Aarav","Kadyn","Milton","Zaid","Kelton","Tripp","Kamren","Slade","Hezekiah","Jakobe","Nathanial","Rishi","Shamar","Geovanni","Pranav","Roderick","Bentley","Clarence","Lyric","Bernard","Carmelo","Denzel","Maximillian","Reynaldo","Cassius","Gordon","Reuben","Samson","Yadiel","Jayvon","Reilly","Sheldon","Abdullah","Jagger","Thaddeus","Case","Kyson","Lamont","Chaz","Makhi","Jan","Marques","Oswaldo","Donavan","Keyon","Kyan","Simeon","Trystan","Andreas","Dangelo","Landin","Reagan","Turner","Arnav","Brenton","Callum","Jayvion","Bridger","Sammy","Deegan","Jaylan","Lennon","Odin","Abdiel","Jerimiah","Eliezer","Bronson","Cornelius","Pierre","Cortez","Baron","Carlo","Carsen","Fletcher","Izayah","Kolten","Damari","Hugh","Jensen","Yurem"];return a[Math.floor(Math.random()*a.length)]}
+      name = generateName();
+      animate();
+      function start(rlname, rlcat) { trees_mp4.remove(), name = (rlname || name), setTimeout(() => (hurricane(name, rlcat)), 10000); started = true }
+      ambient = new THREE.AmbientLight(0x555555, 1.5);
+      scene.add(ambient);
+      directionalLight = new THREE.DirectionalLight(0xffeedd, 3);
+      directionalLight.position.set(0,0,1);
+      scene.add(directionalLight);
+      function hurricane(name, rlcat) {
+        hurricaneFunc = setInterval(()=>{(random(4,4))==0&&config.gusts--;(random(2,2))==0&&((config.gusts+random(5,5))>=config.status[config.roleCategory-1]?config.gusts--:config.gusts++);(config.gusts>=config.status[config.category]&&(config.category++));random(20,20)==0&&config.gusts--;random(random(3,0)==0&&(config.direction.x+=random(6,6)));(random(2,0)==0&&(config.direction.z+=random(5,5)));config.hurricane.position.x+=(config.direction.x>0?.25:-.1);config.hurricane.position.z+=(config.direction.z>0?.25:-.1);for(let i=0;i<config.hurricane.children.length;i++){config.hurricane.remove(config.hurricane.children[i])}for(let i=0;i<config.category;i++){for(let i=0;i<random(100,100,25);i++){const e=new THREE.Mesh(new THREE.CircleGeometry(1, 4),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}));e.position.set(random(20,20,config.category*2),random(20,20),random(20,20,config.category*2));config.hurricane.add(e),e.rotateX(Math.PI/2)}}},300);
+        config.roleCategory = (rlcat || random(6, 6, 1)) - 0;
+        document.querySelector("#role").textContent = config.roleCategory + (random(2,2)==0?-(random(2,2)):(random(2,2)));
+      }
+      (() => { let loader=new THREE.TextureLoader;loader.load("clouds.png",(function(e){var a=new THREE.SphereGeometry(500,60,40),o=new THREE.MeshBasicMaterial({map:e,side:THREE.DoubleSide});a.scale(-1,1,1);d=new THREE.Mesh(a,o);sky=d;sky.material.color.setRGB(.6,.6,.6);sky.material.map.generateMipmaps=!1,sky.material.map.minFilter=THREE.LinearMipMapLinearFilter,sky.material.map.needsUpdate=!0,sky.rotation.y=-.2,scene.add(d),d.position.set(0,0,0)})); })();
+      (() => { let loader=new THREE.TextureLoader;loader.load("rain.png",(function(e){var a=new THREE.SphereGeometry(500,60,40),o=new THREE.MeshBasicMaterial({map:e,side:THREE.DoubleSide,transparent:true});a.scale(-.5,.5,.5);d=new THREE.Mesh(a,o);rain=d;rain.rotateX(.3),rain.material.map.generateMipmaps=!1,rain.material.map.minFilter=THREE.LinearMipMapLinearFilter,rain.material.map.needsUpdate=!0,rain.rotation.y=-.2,scene.add(d),d.position.set(0,0,0)})); })();
+      function isTouchDevice(){return!!window.matchMedia("(pointer: coarse)").matches}
+      isTouchDevice()?(()=>{const{Euler:e,EventDispatcher:t,Vector3:n}=THREE;var o;o=!1;var i=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),c=document.body.clientWidth/2,r=(document.body.clientHeight,window.innerHeight),s=function(t,s){o=!!i,void 0===s&&(console.warn('THREE.PointerLockControls: The second parameter "domElement" is now mandatory.'),s=document.body),this.domElement=s,this.isLocked=!1;var m,u,d,a=this,h={type:"change"},v={type:"lock"},l={type:"unlock"},E=new e(0,0,0,"YXZ"),p=Math.PI/2,k=Math.PI/3.8,L=Math.PI/9,f=new n,y=0,M=0;function x(){}function P(e){u=e.touches[0].clientY,m=e.touches[0].clientX,y=m-c,M=u-(r-100),E.setFromQuaternion(t.quaternion),E.y=.005*y,E.x=.005*M,E.x=Math.max(-p,Math.min(L,E.x)),E.y=Math.max(-k,Math.min(k,E.y)),t.quaternion.setFromEuler(E),a.dispatchEvent(h),console.log(M)}function w(e){}function g(e){if(!1!==a.isLocked){var n=e.movementX||e.mozMovementX||e.webkitMovementX||0,o=e.movementY||e.mozMovementY||e.webkitMovementY||0;E.setFromQuaternion(t.quaternion),E.y-=.002*n,E.x-=.002*o,E.x=Math.max(-p,Math.min(p,E.x)),E.y=Math.max(-k,Math.min(k,E.y)),t.quaternion.setFromEuler(E),a.dispatchEvent(h)}}function b(){document.pointerLockElement===a.domElement?(a.dispatchEvent(v),a.isLocked=!0):(a.dispatchEvent(l),a.isLocked=!1)}function F(){console.error("THREE.PointerLockControls: Unable to use Pointer Lock API")}this.connect=function(){document.addEventListener("mousemove",g,!1),document.addEventListener("touchstart",x,!1),document.addEventListener("touchmove",P,!1),document.addEventListener("pointerlockchange",b,!1),document.addEventListener("pointerlockerror",F,!1)},this.disconnect=function(){document.removeEventListener("mousemove",g,!1),document.removeEventListener("touchend",w,!1),document.removeEventListener("touchmove",onTouchmove,!1),document.removeEventListener("pointerlockchange",b,!1),document.removeEventListener("pointerlockerror",F,!1)},this.dispose=function(){this.disconnect()},this.getObject=function(){return t},this.getDirection=(d=new n(0,0,-1),function(e){return e.copy(d).applyQuaternion(t.quaternion)}),this.moveForward=function(e){f.setFromMatrixColumn(t.matrix,0),f.crossVectors(t.up,f),t.position.addScaledVector(f,e)},this.moveRight=function(e){f.setFromMatrixColumn(t.matrix,0),t.position.addScaledVector(f,e)},this.lock=1==o?function(){a.isLocked=!0,this.connect()}:function(){this.domElement.requestPointerLock()},this.unlock=function(){document.exitPointerLock()},this.connect()};(s.prototype=Object.create(t.prototype)).constructor=s,window.PointerLockControls=s})():(()=>{const _euler=new THREE.Euler(0,0,0,"YXZ"),_vector=new THREE.Vector3,_changeEvent={type:"change"},_lockEvent={type:"lock"},_unlockEvent={type:"unlock"},_PI_2=Math.PI/2;class PointerLockControls extends THREE.EventDispatcher{constructor(e,t){super(),void 0===t&&(console.warn('THREE.PointerLockControls: The second parameter "domElement" is now mandatory.'),t=document.body),this.domElement=t,this.isLocked=!1,this.minPolarAngle=0,this.maxPolarAngle=Math.PI,this.pointerSpeed=1;const o=this;function n(t){if(!1===o.isLocked)return;const n=t.movementX||t.mozMovementX||t.webkitMovementX||0,r=t.movementY||t.mozMovementY||t.webkitMovementY||0;_euler.setFromQuaternion(e.quaternion),_euler.y-=.002*n*o.pointerSpeed,_euler.x-=.002*r*o.pointerSpeed,_euler.x=Math.max(_PI_2-o.maxPolarAngle,Math.min(_PI_2-o.minPolarAngle,_euler.x)),e.quaternion.setFromEuler(_euler),o.dispatchEvent(_changeEvent)}function r(){o.domElement.ownerDocument.pointerLockElement===o.domElement?(o.dispatchEvent(_lockEvent),o.isLocked=!0):(o.dispatchEvent(_unlockEvent),o.isLocked=!1)}function c(){console.error("THREE.PointerLockControls: Unable to use Pointer Lock API")}this.connect=function(){o.domElement.ownerDocument.addEventListener("mousemove",n),o.domElement.ownerDocument.addEventListener("pointerlockchange",r),o.domElement.ownerDocument.addEventListener("pointerlockerror",c)},this.disconnect=function(){o.domElement.ownerDocument.removeEventListener("mousemove",n),o.domElement.ownerDocument.removeEventListener("pointerlockchange",r),o.domElement.ownerDocument.removeEventListener("pointerlockerror",c)},this.dispose=function(){this.disconnect()},this.getObject=function(){return e},this.getDirection=function(){const t=new THREE.Vector3(0,0,-1);return function(o){return o.copy(t).applyQuaternion(e.quaternion)}}(),this.moveForward=function(t){_vector.setFromMatrixColumn(e.matrix,0),_vector.crossVectors(e.up,_vector),e.position.addScaledVector(_vector,t)},this.moveRight=function(t){_vector.setFromMatrixColumn(e.matrix,0),e.position.addScaledVector(_vector,t)},this.lock=function(){this.domElement.requestPointerLock()},this.unlock=function(){o.domElement.ownerDocument.exitPointerLock()},this.connect()}}window.PointerLockControls=PointerLockControls})();
+      controls = new PointerLockControls(camera, renderer.domElement);
+      controls.isLocked = false;
+      controls.pointerSpeed = 2;
+      new THREE.GLTFLoader().load("house.glb", (e) => { house = e.scene; scene.add(house), house.position.set(-15,10.5,-5) });
+      function poweroff() {
+        surge.play();
+        beep.play();
+        directionalLight.intensity = .25;
+        ambient.intensity = .5;
+      }
+      function poweron() {
+        directionalLight.intensity = 3;
+        ambient.intensity = 2;
+      }
+      walkForward = false;
+      walkBackward = false;
+      walkLeft = false;
+      walkRight = false;
+      setInterval(() => {
+        if (walkForward) {
+          camera.translateZ(-walkForwardAcceleration);
+        }
+        if (walkBackward) {
+          camera.translateZ(walkBackwardAcceleration);
+        }
+        if (walkLeft) {
+          camera.translateX(-walkLeftAcceleration);
+        }
+        if (walkRight) {
+          camera.translateX(walkRightAcceleration);
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (!controls.isLocked) {
+          return;
+        }
+        if (e.key.startsWith("Arrow")) {
+          document.querySelector("#walking").play();
+        }
+        if (e.key == "ArrowUp" && !e.repeat) {
+          walkForward = true;
+          walkForwardAcceleration = .01;
+        }
+        if (e.key == "ArrowDown" && !e.repeat) {
+          walkBackward = true;
+          walkBackwardAcceleration = .01;
+        }
+        if (e.key == "ArrowLeft" && !e.repeat) {
+          walkLeft = true;
+          walkLeftAcceleration = .01;
+        }
+        if (e.key == "ArrowRight" && !e.repeat) {
+          walkRight = true;
+          walkRightAcceleration = .01;
+        }
+        if (e.key == " " && !isJumping) {
+          jump();
+        }
+      });
+      document.addEventListener("keyup", (e) => {
+        if (e.key.startsWith("Arrow")) {
+          document.querySelector("#walking").pause();
+          document.querySelector("#walking").currentTime = (0);
+        }
+        if (e.key == "ArrowUp") {
+          walkForward = false;
+          walkForwardAcceleration = 0;
+        }
+        if (e.key == "ArrowDown") {
+          walkBackward = false;
+          walkBackwardAcceleration = 0;
+        }
+        if (e.key == "ArrowLeft") {
+          walkLeft = false;
+          walkLeftAcceleration = 0;
+        }
+        if (e.key == "ArrowRight") {
+          walkRight = false;
+          walkRightAcceleration = 0;
+        }
+      });
+      function jump() {
+        (()=>{let waswalking=walkForward||walkBackward||walkLeft||walkRight;document.querySelector("#walking").pause();isJumping=true;cameraLocked=false;let t=.2;let h=setInterval(()=>{if(t<=0){return(clearInterval(h),(()=>{let t=0;let h=setInterval(()=>{if(camera.position.y<=defaultY){return(isJumping=false,clearInterval(h),cameraLocked=true,waswalking&&document.querySelector("#walking").play())}(t+=.05);camera.position.y+=-t},25)})())}(t+=-.05);camera.position.y+=t},25)})();
+      }
+      window.addEventListener("resize", function() { camera.aspect = window.innerWidth / window.innerHeight, camera.updateProjectionMatrix(), renderer.setSize(window.innerWidth, window.innerHeight) }, true);
+    </script>
+  </body>
+</html>
