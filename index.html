@@ -439,6 +439,12 @@
       renderer.shadowMap.autoUpdate = false;
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      scene.fog = new THREE.Fog(0, 500, 0xffffff);
+      new THREE.GLTFLoader().load("cloud.glb",(e)=> {
+        cloud = e.scene;
+        cloud.position.y = 150;
+        cloud.scale.set(200, 200, 200);
+      });
       document.body.appendChild(renderer.domElement);
       follower = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
       water = new THREE.Mesh(new THREE.CircleGeometry(10, 20), new THREE.MeshPhongMaterial({ transparent: true, map: new THREE.TextureLoader().load("water.png"), side: THREE.DoubleSide })), scene.add(water), water.rotation.set(Math.PI/2, 0, 0), water.position.set(0, -5, 0);
@@ -474,8 +480,8 @@
       }
       function teleportPlayerIfOob() {
         if (camera.position.y <= -25) {
-          playerCollider.start.set(0, 0.35, 0);
-          playerCollider.end.set(0, .9, 0);
+          playerCollider.start.set(0, -2, 0);
+          playerCollider.end.set(0, -1.45, 0);
           playerCollider.radius = 0.3;
           camera.position.copy(playerCollider.end);
           camera.rotation.set(0, Math.PI, 0);
@@ -742,6 +748,28 @@
         (()=>{let waswalking=walkForward||walkBackward||walkLeft||walkRight;document.querySelector("#walking").pause();isJumping=true;cameraLocked=false;let t=.2;let h=setInterval(()=>{if(t<=0){return(clearInterval(h),(()=>{let t=0;let h=setInterval(()=>{if(camera.position.y<=defaultY){return(isJumping=false,clearInterval(h),cameraLocked=true,waswalking&&document.querySelector("#walking").play())}(t+=.05);camera.position.y+=-t},25)})())}(t+=-.05);camera.position.y+=t},25)})();
       }
       window.addEventListener("resize", function() { camera.aspect = window.innerWidth / window.innerHeight, camera.updateProjectionMatrix(), renderer.setSize(window.innerWidth, window.innerHeight) }, true);
+      (function() {
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, .1, 1000);
+        camera.fov = 60;
+        camera.updateProjectionMatrix();
+        const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
+        renderer.setSize(200, 200);
+        renderer.useLegacyLights = false;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.setPixelRatio(.5);
+        function animate() {
+          camera.position.set(0, 0, -10);
+          if (typeof house != "undefined") camera.lookAt(house.position);
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+        }
+        setInterval(() => {
+          let url = renderer.domElement.toDataURL();
+          scene.getObjectByName("defaultMaterial").material.map = new THREE.TextureLoader().load(url);
+        }, 1000);
+        animate();
+      })();
     </script>
   </body>
 </html>
